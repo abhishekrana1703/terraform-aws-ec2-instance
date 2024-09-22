@@ -50,17 +50,23 @@ jobs:
         run: |
           mkdir -p $HOME/.ssh
           ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -N ""
-          chmod 600 $HOME/.ssh/id_rsa  # Set correct file permissions for the private key
-          ls -l $HOME/.ssh/id_rsa      # Debug: Check permissions of the private key
-          openssl rsa -in $HOME/.ssh/id_rsa -outform pem -out private.pem  # Specify output path
-          ls -l private.pem             # Debug: Check if the private PEM file is created
-        shell: bash
+          chmod 400 $HOME/.ssh/id_rsa  # Set correct file permissions for the private key
+          openssl rsa -in $HOME/.ssh/id_rsa -outform pem -out $HOME/.ssh/private.pem
+          ls -l $HOME/.ssh  # List contents for debugging
+
+      - name: Debug Private Key
+        run: cat $HOME/.ssh/id_rsa  # Ensure the key is generated correctly
+
+      - name: Add SSH key to agent
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add $HOME/.ssh/id_rsa
 
       - name: Upload private SSH key as an artifact
         uses: actions/upload-artifact@v3
         with:
           name: ssh-private-key
-          path: private.pem
+          path: $HOME/.ssh/private.pem
 
       - name: Terraform Init
         run: terraform init
