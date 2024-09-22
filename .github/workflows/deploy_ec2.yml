@@ -1,0 +1,82 @@
+name: Deploy EC2 Instance with Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'AWS Region'
+        required: true
+        default: 'us-east-1'
+      instance_type:
+        description: 'EC2 Instance Type'
+        required: true
+        default: 't2.micro'
+      ami:
+        description: 'AMI ID'
+        required: true
+        default: 'ami-12345678'
+      subnet_id:
+        description: 'Subnet ID'
+        required: true
+      key_name:
+        description: 'SSH Key Name'
+        required: true
+      security_group_ids:
+        description: 'VPC Security Group IDs (comma separated)'
+        required: true
+      volume_size:
+        description: 'Root volume size in GB'
+        required: true
+        default: '10'
+      server_name:
+        description: 'Name of the EC2 instance'
+        required: true
+        default: 'MyLinuxServer'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Install OpenSSL
+        run: sudo apt-get install -y openssl
+
+      - name: Generate SSH Key
+        run: |
+          ssh-keygen -t rsa -b 4096 -f id_rsa -N "" 
+          openssl rsa -in id_rsa -outform pem > private.pem
+        shell: bash
+
+      - name: Upload private SSH key as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ssh-private-key
+          path: private.pem
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve \
+          -var="region=${{ github.event.inputs.region }}" \
+          -var="ami=${{ github.event.inputs.ami }}" \
+          -var="instance_type=${{ github.event.inputs.instance_type }}" \
+          -var="subnet_id=${{ github.event.inputs.subnet_id }}" \
+          -var="vpc_rds_security_group_id=${{ github.event.inputs.security_group_ids }}" \
+          -var="key_name=${{ github.event.inputs.key_name }}" \
+          -var="volume_size=${{ github.event.inputs.volume_size }}" \
+          -var="server_name=${{ github.event.inputs.server_name }}" 
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
