@@ -15,14 +15,8 @@ on:
         description: 'AMI ID'
         required: true
         default: 'ami-12345678'
-      subnet_id:
-        description: 'Subnet ID'
-        required: true
       key_name:
         description: 'SSH Key Name'
-        required: true
-      security_group_ids:
-        description: 'VPC Security Group IDs (comma separated)'
         required: true
       volume_size:
         description: 'Root volume size in GB'
@@ -72,8 +66,6 @@ jobs:
           -var="region=${{ github.event.inputs.region }}" \
           -var="ami=${{ github.event.inputs.ami }}" \
           -var="instance_type=${{ github.event.inputs.instance_type }}" \
-          -var="subnet_id=${{ github.event.inputs.subnet_id }}" \
-          -var="vpc_rds_security_group_id=${{ github.event.inputs.security_group_ids }}" \
           -var="key_name=${{ github.event.inputs.key_name }}" \
           -var="volume_size=${{ github.event.inputs.volume_size }}" \
           -var="server_name=${{ github.event.inputs.server_name }}" 
