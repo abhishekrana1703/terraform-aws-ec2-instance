@@ -20,7 +20,7 @@ on:
       ami:
         description: 'AMI ID'
         required: true
-        default: 'ami-0c02fb55956c7d316'
+        default: 'ami-12345678'
       key_name:
         description: 'SSH Key Name'
         required: true
@@ -51,7 +51,9 @@ jobs:
           mkdir -p $HOME/.ssh
           ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -N ""
           chmod 600 $HOME/.ssh/id_rsa  # Set correct file permissions for the private key
-          openssl rsa -in $HOME/.ssh/id_rsa -outform pem > private.pem
+          ls -l $HOME/.ssh/id_rsa      # Debug: Check permissions of the private key
+          openssl rsa -in $HOME/.ssh/id_rsa -outform pem -out private.pem  # Specify output path
+          ls -l private.pem             # Debug: Check if the private PEM file is created
         shell: bash
 
       - name: Upload private SSH key as an artifact
