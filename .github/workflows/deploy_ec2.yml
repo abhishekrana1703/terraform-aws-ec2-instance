@@ -20,7 +20,7 @@ on:
       ami:
         description: 'AMI ID'
         required: true
-        default: 'ami-12345678'
+        default: 'ami-0c02fb55956c7d316'
       key_name:
         description: 'SSH Key Name'
         required: true
@@ -48,7 +48,9 @@ jobs:
 
       - name: Generate SSH Key
         run: |
+          mkdir -p $HOME/.ssh
           ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -N ""
+          chmod 600 $HOME/.ssh/id_rsa  # Set correct file permissions for the private key
           openssl rsa -in $HOME/.ssh/id_rsa -outform pem > private.pem
         shell: bash
 
