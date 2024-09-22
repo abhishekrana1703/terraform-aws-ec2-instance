@@ -46,13 +46,10 @@ jobs:
         with:
           terraform_version: 1.5.0
 
-      - name: Install OpenSSL
-        run: sudo apt-get install -y openssl
-
       - name: Generate SSH Key
         run: |
-          ssh-keygen -t rsa -b 4096 -f id_rsa -N "" 
-          openssl rsa -in id_rsa -outform pem > private.pem
+          ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -N ""
+          openssl rsa -in $HOME/.ssh/id_rsa -outform pem > private.pem
         shell: bash
 
       - name: Upload private SSH key as an artifact
