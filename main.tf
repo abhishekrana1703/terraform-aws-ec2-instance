@@ -72,7 +72,8 @@ resource "azurerm_linux_virtual_machine" "example" {
   # OS Disk configuration
   os_disk {
     caching       = "ReadWrite"
-    create_option = "FromImage"
+    storage_account_type = "Standard_LRS"
+   disk_size_gb        = 30 
   }
 
   # Optional: Additional configuration (e.g., tags)
