@@ -4,28 +4,21 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "The Azure region to deploy the resources"
+  description = "The Azure location for the resources"
   type        = string
 }
 
 variable "vm_name" {
-  description = "The name of the Virtual Machine"
+  description = "The name of the virtual machine"
   type        = string
-}
-
-variable "vm_size" {
-  description = "The size of the Virtual Machine"
-  type        = string
-  default     = "Standard_DS1_v2"
 }
 
 variable "admin_username" {
-  description = "The admin username for the VM"
+  description = "The administrator username for the virtual machine"
   type        = string
 }
 
 variable "admin_password" {
-  description = "The admin password for the VM"
+  description = "The administrator password for the virtual machine"
   type        = string
-  sensitive   = true
 }
