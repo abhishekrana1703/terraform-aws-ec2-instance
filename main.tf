@@ -1,81 +1,82 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"  # Specify the appropriate version of the Azure provider
-    }
-  }
-
-  required_version = ">= 1.0.0"
+provider "aws" {
+  region  = var.region
+  profile = var.profile
 }
 
-provider "azurerm" {
-  features {}
+########################
+## VPC Configuration
+########################
+
+resource "aws_vpc" "my_vpc" {
+  cidr_block = "172.31.0.0/16"
 }
 
-# Resource Group
-resource "azurerm_resource_group" "example" {
-  name     = var.resource_group_name
-  location = var.location
+resource "aws_internet_gateway" "my_internet_gateway" {
+  vpc_id = aws_vpc.my_vpc.id
 }
 
-# Virtual Network
-resource "azurerm_virtual_network" "example" {
-  name                = "${var.resource_group_name}-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+resource "aws_subnet" "public_subnet" {
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = "172.31.0.0/24"
+  availability_zone = var.availability_zone
+  map_public_ip_on_launch = true
 }
 
-# Subnet
-resource "azurerm_subnet" "example" {
-  name                 = "${var.resource_group_name}-subnet"
-  resource_group_name  = azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = ["10.0.1.0/24"]
-}
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.my_vpc.id
 
-# Network Interface
-resource "azurerm_network_interface" "nic" {
-  name                = "${var.vm_name}-nic"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                    = azurerm_subnet.example.id
-    private_ip_address_allocation = "Dynamic"
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.my_internet_gateway.id
   }
 }
 
-# Virtual Machine
-resource "azurerm_linux_virtual_machine" "example" {
-  name                = var.vm_name
-  resource_group_name = azurerm_resource_group.example.name
-  location            = azurerm_resource_group.example.location
-  size                = "Standard_DS1_v2"
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-
-  network_interface_ids = [
-    azurerm_network_interface.nic.id,
-  ]
-
-  # Source image configuration
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  # OS Disk configuration
-  os_disk {
-    caching       = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-   disk_size_gb        = 30 
-  }
-
-  # Optional: Additional configuration (e.g., tags)
+resource "aws_route_table_association" "public_subnet_association" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_route_table.id
 }
 
+########################
+## Security Group Configuration
+########################
+
+resource "aws_security_group" "allow_ssh" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Change this to restrict access to your IP for better security
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+########################
+## EC2 Instance Configuration
+########################
+
+resource "aws_instance" "web_server" {
+  ami                    = var.ami
+  instance_type         = var.instance_type
+  subnet_id             = aws_subnet.public_subnet.id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]  # Use the new security group
+  key_name              = var.key_name
+  disable_api_termination = true
+  associate_public_ip_address = true  # Ensure this line is included
+
+  root_block_device {
+    delete_on_termination = true
+    volume_type          = "gp2"
+    volume_size          = var.volume_size
+  }
+  tags = {
+    Name = var.server_name
+  }
+}
