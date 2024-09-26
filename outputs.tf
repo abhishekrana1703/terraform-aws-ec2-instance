@@ -1,8 +1,20 @@
-# outputs.tf
-output "resource_group_name" {
- value = azurerm_resource_group.example.name
+output "public_ip" {
+  description = "The public IP address of the web server instance."
+  value       = aws_instance.web_server.public_ip
 }
 
-output "vm_public_ip" {
- value = azurerm_network_interface.nic.ip_configuration[0].private_ip_address
+output "public_dns" {
+  description = "The public DNS name of the web server instance."
+  value       = aws_instance.web_server.public_dns
+}
+
+
+output "instance_id" {
+  description = "The ID of the web server instance."
+  value       = aws_instance.web_server.id
+}
+
+output "private_ip" {
+  description = "The private IP address of the web server instance."
+  value       = aws_instance.web_server.private_ip
 }
